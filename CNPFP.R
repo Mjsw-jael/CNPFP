@@ -350,42 +350,6 @@ n <- blockwiseModules(
   
   numericLabels = FALSE,
   
-  # Options controlling behaviour
-  
-  nThreads = 0,
-  useInternalMatrixAlgebra = FALSE,
-  useCorOptionsThroughout = TRUE,
-  verbose = 0, indent = 0)
-
-TOMinfo <- net  
-listLabels <- labels2colors(cbind(immune.info,histone.info,synapse.info))
-colnames(listLabels) <- c("immune","histone","synapse")
-
-## Plot a dendrogram with this information marked
-plotDendroAndColors(dendro=netVec[[i]]$TOMinfo$dendrograms[[1]],
-                    colors=t(rbind(netVec[[i]]$TOMinfo$colors,t(listLabels),netVec[[i]]$geneSigColors)),
-                    cex.dendroLabels=1.2,addGuide=TRUE,
-                    dendroLabels=FALSE,
-                    groupLabels=c("Module Colors",colnames(listLabels),rownames(netVec[[i]]$geneSignificance)),
-                    main=paste("Co-expression based topological overlap distance dendrogram",sep=" "))
-
-## Plot eigengene dendrogram/heatmap - using bicor
-MEs <- TOMinfo$MEs
-windows()
-if (ncol(MEs) > 2) {
-  plotEigengeneNetworks(MEs, "Eigengene (1st PC of each module) Clustering",
-                        marHeatmap = c(3,4,2,2), marDendro = c(0,4,2,0),
-                        plotDendrograms = TRUE, xLabelsAngle = 90,heatmapColors=blueWhiteRed(50))
-}
-colnames(MEs) <- substr(colnames(MEs),3,100)
-rownames(MEs) <- colnames(datExprYeast1)
-## Get sigend kME values - these delinate gene membership for each module in a continuous manner
-tmpMEs <- MEs
-colnames(tmpMEs) <- paste("ME",colnames(MEs),sep="")
-kMEdat <- signedKME(datExprYeast1, tmpMEs)
-kMEtable <- kMEdat
-  keepcol <- TOMinfo$colors
-  
   ## Make an adjacency matrix and set some arbitrary cutoffs and parameters for plotting the network
   c = as.vector(data)
   y <- subset(datExprYeast1, rownames(datExprYeast1)%in%c)
@@ -418,44 +382,6 @@ kMEtable <- kMEdat
   
   g1 <- graph.adjacency(as.matrix(adjMat),mode="undirected",weighted=TRUE,diag=FALSE) ## Graph information for plotting
   
-  ## Color in the pie charts
-  modulecolorsYCC = labels2colors(keepcol)
-  modColors <- t(modulecolorsYCC)
-  modColors[modulecolorsYCC =="turquoise"] <- "grey"
-  modColors[1,modulecolorsYCC [1,]=="blue"] <- "darkblue"
-  modColors[2,modulecolorsYCC [2,]=="blue"] <- "orange"
-  modColors[3,modulecolorsYCC [3,]=="blue"] <- "black"
-  
-  probes = names(datExprYeast1)
-  keepgenes = 
-  modules = c("blue","brown", "turquoise","black","green","red", "yellow","grey")
-  inModule=is.finite(match(modulecolorsYCC,modules))
-  modProbes=probes[inModule]
-  library(org.Sc.sgd.db)
-  Symbol <- mget(data, org.Sc.sgdGENENAME)
-  geneSymbols = Symbol
-  genes
-  
-  colorVec <- TOMinfo$colors[match(keepgenes,Symbol)]
-  
-  ## Extract proper vertex names
-  geneSymbols <- geneDat[,"hgnc_symbol"]
-  par(mar=c(1,1,1,1))
-  lay <- layout_with_kk(g)
-  ## Plot the network with specific parameters
-  windows()
-  plot.igraph(g1,vertex.label=geneSymbols,
-              vertex.label.dist=0.3,
-              vertex.shape="none",
-              vertex.size=5,
-              vertex.label.color="black",
-              vertex.label.cex=0.8, vertex.label.dist=2,
-              vertex.frame.color="black",
-              layout=layoutCircle,
-              edge.color="green")
-  
-  dev.off()
-  
   tkid <- tkplot(g1)
   l <- tkplot.getcoords(tkid) # grab the coordinates from tkplot
   
@@ -474,7 +400,6 @@ kMEtable <- kMEdat
        edge.color="Black")
   
   graph.density(g1)
-  data = c("YHR089C", "YKL113C", "YNL248C", "YPL004C", "YMR001C", "YDR226W", "YLL026W", "YPL127C")
   
   cor(authority.score(g1)$vector, V(g1)$auth)
   cor(hub.score(g1)$vector, V(g1)$hub)
@@ -501,34 +426,9 @@ kMEtable <- kMEdat
   meta1 <- metacont(n.e, mean.e, sd.e, n.c, mean.c, sd.c, data=data, sm="SMD")
   meta1
   forest(meta1)
-
-
-
-
-graph<-wgcna2igraph(net, datExprYeast1,
-                    modules2plot = c("black","brown","blue","green"),
-                    colors2plot = c("red","turquoise","yellow","grey"),
-                    MEs.threshold = 0.75, adjacency.threshold = 0.1,
-                    adj.power = pow, verbose = T,
-                    node.size = 0, frame.color = NA, node.color = NA,
-                    edge.alpha = .5, edge.width =1, returnNet = TRUE)
+  
 library(WGCNA)
 library(igraph)
-data(kidney) #' from simseq
-counts<-kidney$counts
-counts<-counts[sample(1:nrow(counts),1000),]
-info<-with(kidney,
-           data.frame(id = paste(replic, treatment, sep = "_"),
-                      rep=replic,
-                      Treatment=ifelse(treatment == "Tumor","tumor","cntr"),
-                      stringsAsFactors=F))
-colnames(counts)<-info$id
-stats <- pipeLIMMA(counts = counts,
-                   info = info,
-                   block = NULL,
-                   formula = "~ Treatment")
-
-datExpr.1=t(stats$voom$E)
 pow=6
 net.1 = blockwiseModules(datExpr.1, power = pow,
                          maxBlockSize = 10000, deepSplit = 2,
@@ -538,19 +438,9 @@ net.1 = blockwiseModules(datExpr.1, power = pow,
 module_assignments <- net.1$colors
 nlevels(factor(module_assignments))
 
-graph<-wgcna2igraph(net = net.1, datExpr = datExprYeast1,
-                    modules2plot = c("black","brown","blue","green","red","turquoise","yellow","grey"),
-                    colors2plot = c("black","brown","blue","green","red","turquoise","yellow","grey"),
-                    kME.threshold = 0.5, adjacency.threshold = 0.1,
-                    adj.power = pow, verbose = T,
-                    node.size = 0, frame.color = NA, node.color = NA,
-                    edge.alpha = .5, edge.width =1)
-windows()
-plot(g1)
-
 fc = cluster_fast_greedy(g1,weights =NULL)# cluster_walktrap cluster_edge_betweenness, cluster_fast_greedy, cluster_spinglass
 modularity = modularity(g1,membership(fc))
-# ???????????????????????????
+
 comps = membership(fc)
 colbar = rainbow(max(comps))
 V(g1)$color = colbar[comps] 
@@ -616,10 +506,6 @@ plot.igraph(g1,layout=layoutFR, vertex.color="green", vertex.label=NA,
             vertex.label.font=10, vertex.label.cex=.6)
 
 par(mar=c(2,2,2,1))
-
-###########https://media.nature.com/original/nature-assets/neuro/journal/v18/n2/extref/nn.3922-S11.txt
-
-
 
 ###Visualize network for blue and brown modules
 # Cytoscape
@@ -1070,33 +956,6 @@ PPI <- names(datExprADJ1)
 ####Select annotations associated with our dataset from annotation data
 x <- subset(annot, rownames(annot)%in%PPI)
 write.csv(x,"PPI.csv",row.names=TRUE)
-#####Sparce matrix
-library(Matrix)
-A <- as(x, "sparseMatrix")
-#H <- as(annot[1:3469,1:3469], "sparseMatrix")
-G <- as(ADJ1[1:2283,], "sparseMatrix")
-R <- cbind2(A, G)
-writeMat("YPPINet11.mat", YPPINet_data=R)
-#R <- Matrix(x, sparse = TRUE)
-
-
-A
-library(R.matlab)
-writeMat("YPPINet1.mat", YPPINet_data=B)
-G <- ADJ1
-H <- annot[1:3469,1:3469]
-R <- x
-PPINett <- sparseMatrix(i=G, j=H, x=R)
-PPINett <- sparseMatrix(i=G, j=H, x=R)
-
-#x_factor <- data.frame(lapply(x, as.factor))
-
-###Graph-theoretic Analysis
-library(sna)
-#Generate some test data
-dat<-rgraph(10,mode="graph")
-#Compute eigenvector centrality scores
-evcent(dat)
 
 x <- subset(annot, rownames(annot)%in%PPI)
 PP <- rownames(x)
@@ -1108,11 +967,8 @@ ext_net <- extend_network(YPP, max=800)
 annotations_sub1 <- extend_network(YPP)
 
 #####scores 
-annot_sub <- filter_network(x,flag = 1, min=83, max=1000)
 annot_sub1 <- filter_network(x,flag = 1, min=100, max=1000)
 ext_gene_network <- extend_network(YPP, max=300)
-annotations_sub <- extend_network(YPP, max=300)
-ext_sub1 <- extend_network(YPP, max=1000)
 
 GO_groups_voted <- run_GBA(x, annotations_sub)
 # neighbor voting
@@ -1139,93 +995,16 @@ aucB <- gba_auc_nv[filt,3]
 windows()
 hist <- plot_distribution(aucA, xlab="AUROCs")
 windows()
-avgs <- plot_density_compare(aucA, aucB, xlab="AUROCs")
+avgs <- plot_density_compare(aucA, aucB, xlab="AUROC")
 windows()
 plot_value_compare(aucA, aucB)
-scores3 <- predictions(annot_sub, ext_sub1)
-scores2 <- predictions(annot_sub1, ext_gene_network)
-scores1 <- predictions(x, ext_gene_network)
-#scores1 <- predictions(x, ext_net)
-scores <- predictions(x, ADJ1[1:2279,1:2279])
+scores <- predictions(x, ADJ1)
 windows()
 roc <- plot_roc(scores, annot)
-roc1 <- plot_roc(scores1, x)
-roc2 <- plot_roc(scores2, annot_sub1)
 plot_roc_overlay(scores, x)
 roc <- get_roc(scores, x)
-roc1 <- get_roc(scores1, x)
-roc2 <- get_roc(scores2, annot_sub1)
-roc3 <- get_roc(scores3, annot_sub)
 auroc <- get_auc(roc[,1], roc[,2])
-auroc1 <- get_auc(roc1[,1], roc1[,2])
-auroc2 <- get_auc(roc2[,1], roc2[,2])
-auroc3 <- get_auc(roc3[,1], roc3[,2])
 print(auroc)
-print(auroc1)
-print(auroc2)
-print(auroc3)
-
-
-###Fmeasure
-prc <- get_prc(scores, x)
-fm <- fmeasure(prc[,1], prc[,2])
-fm
-
-#####Plots of multiple density curves
-aurocsA <- density((runif(1000)+runif(1000)+runif(1000)+runif(1000))/4)
-aurocsB <- density((runif(1000)+runif(1000)+runif(1000))/3)
-aurocsC <- density(runif(1000))
-hists <- list(auroc, auroc1, auroc2, auroc3)
-windows()
-temp <- plot_densities(hists,col = c("lightgrey", "black", "blue", "red"), xlab = "AUROC",
-                       ylab = "Density", mode='density')
-
-###Working ROC curves code
-library(pROC)
-windows()
-plot(roc, lty = 1, lwd=2, col = "blue", type ="l")
-par(new = TRUE)
-plot(roc1, col = "green", xaxt = "n", yaxt = "n", lty = 1, lwd=2, type ="l", pch = 21)
-par(new = TRUE)
-plot(roc2, col = "Brown", xaxt = "n", yaxt = "n", lty = 1, lwd=2, type ="l", pch = 21)
-par(new = TRUE)
-plot(roc3, col = "black", xaxt = "n", yaxt = "n", lty = 1, lwd=2, type ="l", pch = 21)
-title(main="ROC Curve of 4 models", font.main=4)
-abline(0, 1, lty = 2)
-legend("right", legend = c("PfunBG", "GBA","AptRank","CNPFP"), col = c("blue", "green", "Black","Brown"), lty = 1, lwd=2)
-#col=c("black", "green", "blue", "magenta", "brown", "orange"), 
-
-##2
-windows()
-rocob <- plot.roc(roc, roc1, roc2, percent=TRUE, main = "ROC Curves", pch=21:22, lty=1:2)
-lines(rocob, col="#008600")
-lines(rocob, col="#840000")
-legend("right", legend = c("RP1", "RP2", "RP3"), col = c("black", "#008600", "#840000"), lty = 1, lwd=1)
-###############
-
-
-library(ggplot2)
-ggplot(data=NULL, aes(x=false_pos, y=true_pos)) +
-  geom_line(data=auroc, aes(color=model.name)) +
-  geom_line(data=auroc1, aes(color=model.name)) +
-  geom_line(data=auroc2, aes(color=model.name))
-
-vector1 <- c(auroc, auroc1, auroc2)
-v <- data.frame(vec=vector1)
-windows()
-ggplot(v,aes(x=1,y=vec),colour=factor(cyl)) + geom_line()
-
-library(mlr)
-df = generateThreshVsPerfData(list(lda = scores, ksvm = scores1), measures = list(fpr, tpr))
-plotROCCurves(df)
-
-
-
-windows()
-#plot(roc, col = 1, lty = 2, main = "ROC")
-windows()
-plot(roc, roc1, col = 4, lty = 3, add = TRUE)
-
 
 ##Evaluation
 library(caret)
@@ -1241,203 +1020,12 @@ xtab[1,1]/sum(xtab[1:2,1])
 # F-Score: 2 * precision * recall /(precision + recall):
 2 * 1 * 1 / (1 + 1)
 
-#########ROC curves
-library(caTools)
-colAUC(cbind(scores, scores1, scores2), (x), plotROC = T)
-library(pROC)
-windows()
-roc_rose <- plot(roc(roc, roc1, roc2), print.auc = TRUE, col =c("red","green","black"))
-
-library(ROCR)
-windows()
-plot(scores,col="red",lwd=2)
-plot(scores1,add=TRUE,col="green",lwd=2)
-plot(scores2,add=TRUE,col="blue",lwd=2)
-#plot(rfmodel.performance,add=TRUE,col="black",lwd=2)
-title(main="ROC Curve of 4 models", font.main=4)
-plot_range<-range(0,0.5,0.5,0.5)
-legend(0.5, plot_range[2], c("scores","scores1","random forestscores2"), cex=0.8,
-       col=c("red","green","black"), pch=21:22, lty=1:2)
-
-
-
-
-# List of predictions
-preds_list <- list(dt_preds, bag_preds, rf_preds, gbm_preds)
-
-# List of actual values (same for all)
-m <- length(preds_list)
-actuals_list <- rep(list(credit_test$default), m)
-
-# Plot the ROC curves
-pred <- prediction(roc, roc1, roc2)
-rocs <- performance(pred, "tpr", "fpr")
-plot(rocs, col = as.list(1:m), main = "Test Set ROC Curves")
-legend(x = "bottomright", 
-       legend = c("Decision Tree", "Bagged Trees", "Random Forest", "GBM"),
-       fill = 1:m)
-
-
-
 ####Accuracy 
 library(AUC)
 accuracy(scores, x)
-
-
-#DCLG for link filteration
-require(DCGL)
-data<-YREC
-datExprYRC=as.data.frame(t(YREC[,-c(1:8)]))
-datExprYeast=as.data.frame(t(Yeastdata[,-c(1:7)]))
-data(Yeastdata)
-exprs1 <- datExprYeast[1:40,1:15]
-exprs2 <- datExprYeast[1:40,16:40]
-HTN <- rLinkfilter(datExprYeast[1:40,1:15],datExprYeast[1:40,16:40],cutoff=0.8,r.method='pearson')
-HTNq <- qLinkfilter(exprs1, exprs2, cutoff=0.25,r.method='pearson',q.method='BH')
-HTNq$rth.1
-HTNq$rth.2
-HTNq$cor.filtered.1[1:5]
-HTNq$cor.filtered.2[1:5]
-data(Yeastdata)
-C_r <- systematicLinkfilter(datExprYeast)
-WGCNA(exprs1, exprs2, power = 12, variant = "WGCNA")
-WGCNA(exprs1,exprs2,power=12,variant='WGCNA')
-
-#data <- lapply(data, as.numeric)
-#library(xgboost)
-#xgb.DMatrix(data=data.matrix(data))
-#exprs.1<-data[1:30]
-#expres.2<-data[31:60]
-HTNDCP.res<-DCp(datExprYeast[1:40,1:5],datExprYeast[1:40,6:15],link.method='qth',cutoff=0.25,N=0)
-HTNDCE.res<-DCe(datExprYeast[1:40,1:5],datExprYeast[1:40,6:15],link.method='qth',cutoff=0.25,nbins=10,p=0.1)
-HTN.res<-rLinkfilter(datExprYeast[1:40,1:5],datExprYeast[1:40,6:15], cutoff = 0.8, r.method = c("pearson", "spearman")[1])
-LRC(exprs1, exprs2,link.method ='qth', cutoff=0.25)
-ASC(exprs1, exprs2, link.method = 'qth', cutoff=0.25)
-
-###Newman's Modularity clustering 
-library(igraph)
-# read graph from csv file
-G<-read.graph("unipartite_edgelist.txt", format="ncol")
-fgreedy<-fastgreedy.community(G,merges=TRUE, modularity=TRUE)
-memberships <-community.to.membership(G, fgreedy$merges, steps=which.max(fgreedy$modularity)-1)
-print(paste('Number of detected communities=',length(memberships$csize)))
-# Community sizes:
-print(memberships$csize)
-# modularity:
-max(fgreedy$modularity)
-
-
+#### bar plots of Hub scores 
 library(ggplot2)
-theme_set(theme_bw())  
 
-# Data Prep
-data("mtcars")  # load data
-mtcars$`car name` <- rownames(data)  # create new column for car names
-mtcars$mpg_z <- round((mtcars$mpg - mean(c(0.9213, 0.771, 0.6061, 0.6742, 0.8021, 0.956, 0.5365, 0.7826)))/sd(c(0.9213, 0.771, 0.6061, 0.6742, 0.8021, 0.956, 0.5365, 0.7826)), 2)  # compute normalized mpg
-mtcars$mpg_type <- ifelse(mtcars$mpg_z < 0, "below", "above")  # above / below avg flag
-mtcars <- mtcars[order(mtcars$mpg_z), ]  # sort
-mtcars$`car name` <- factor(mtcars$`car name`, levels = mtcars$`car name`)  # convert to factor to retain sorted order in plot.
-
-
-p1 <- ggplot(adx, aes(x = row.names(data), y=(c(0.9213, 0.771, 0.6061, 0.6742, 0.8021, 0.956, 0.5365, 0.7826)))) +
-  geom_bar(stat = "identity") +
-  coord_flip() +
-  ggtitle("Fig. A: Default rotated x-axis")
-p1 + geom_bar()
-
-
-# Diverging Barcharts
-ggplot(mtcars, aes(x=`mtcars$`car name` `, y=mpg_z, label=mpg_z)) + 
-  geom_bar(stat='identity', aes(fill=mpg_type), width=.5)  +
-  scale_fill_manual(name="Mileage", 
-                    labels = c("Above Average", "Below Average"), 
-                    values = c("above"="#00ba38", "below"="#f8766d")) + 
-  labs(subtitle="Normalised mileage from 'mtcars'", 
-       title= "Diverging Bars") + 
-  coord_flip()
-
-
-library(ggplot2)
-df <- data.frame(x = rep(c(1, 2, 3, 4, 5, 6, 7, 8), c(0.9213, 0.771, 0.6061, 0.6742, 0.8021, 0.956, 0.5365, 0.7826)))
-ggplot(df, aes(x)) + geom_bar()
-
-#df <- data.frame(trt = c("YHR089C", "YKL113C", "YNL248C", "YPL004C", "YMR001C", "YDR226W", "YLL026W", "YPL127C"), Hub Score = c(0.9213, 0.771, 0.6061, 0.6742, 0.8021, 0.956, 0.5365, 0.7826))
-df <- data.frame(Genes = c("ADK1","GAR1", "CDC5", "HHO1", "RAD27", "LSP1", "RPA49", "HSP104"), Hub_Score = c(0.956, 0.9213, 0.8021, 0.7826, 0.771, 0.6742, 0.6061, 0.5365))
-df$Genes <- factor(df$Genes, levels = df$Genes[order(df$Hub_Score)])
-df$Genes  # notice the changed order of factor levels
-windows()
-p <- ggplot(df, aes(x = Genes, y = Hub_Score, family="Times New Roman", width = 0.50)) +
-      labs(x = "Genes") + 
-      geom_bar(position = "dodge2", stat='identity', colour="black")  +
-      theme_classic() +
-      theme(aspect.ratio = .5) + 
-      scale_y_continuous(expand = c(0, 0), breaks = seq(0,1.1,by=0.1))
-p + coord_flip(ylim = c(0.5,1))
-
-      geom_col()
-      
-
-library(tidyr)  
-windows()
-bp <- ggplot(df, aes(x=Genes, y=Hub_Score)) +
-  theme_classic() +
-  geom_boxplot(notch=TRUE, outlier.shape=NA, coef=1e30)
-bp
-
-p <- ggplot(df, aes(y = Hub_Score, x = Genes))
-p <- p + geom_boxplot()
-p <- p + scale_x_discrete(name= "Genes",)
-p <- p + scale_y_continuous(name= "Hub_Score")
-p
-p <- p + geom_errorbar(aes(ymin=min,ymax=max),linetype = 1,width = 0.5) #main range
-p <- p + geom_crossbar(aes(y=Hub_Score,ymin=Q1,ymax=Q3),linetype = 1,fill='white') 
-
-
-
-scale_y_discrete(position = "top")
-
-  
-names(Symbol1)
-
-d = c("YHR089C", "YKL113C", "YNL248C", "YPL004C", "YMR001C", "YDR226W", "YLL026W", "YPL127C")
-write.csv(d, file="hub_genes.csv")
-library(dplyr)
-library(tidyverse)
-library(plotrix) #for quick s.e. calculations sometimes needed for data tidy step
-library(meta) #nice package for most meta-statistics
-cushions <-read.csv("F:/Jael New Submission/hub_genes.csv")
-data <- cushions %>% group_by(x) %>% summarise(mean.x = mean(x))
-m <- metagen(mean.Rii, error, studlab = Study, data = data)
-forest(m)
-
-cushions <-read.csv("F:/Jael New Submission/hub_genes.csv")
-data <- cushions %>% group_by(Gene.Name) %>% summarise(mean.Rii = mean(Rii), error = std.error(Rii))
-m <- metagen(mean.Rii, error, studlab = Study, data = data)
-forest(m)
-
-summary(cushions, ref="plac")
-
-library(metafor)
-
-data(dat.bcg)
-
-res <- rma(measure="OR", ai=tpos, bi=tneg, ci=cpos, di=cneg, data=dat.bcg, slab=paste(dat.bcg$author, dat.bcg$year, sep=", "))
-
-library(igraph)
-datExprYeast
-g <- graph_from_data_frame(datExprYeast, directed=F)
-print(g, e=TRUE, v=TRUE)
-
-
-library(precrec)
-sscurves <- evalmod(scores = scores, labels = YPP)
-data(P10N10)
-
-## Generate an sscurve object that contains ROC and Precision-Recall curves
-sscurves <- evalmod(scores = P10N10$scores, labels = P10N10$labels)
-sscurves
-
-####Comparison of F-Score, Recall and Precision bar plots 
 df <- data.frame(Genes = c("ADK1","GAR1", "CDC5", "HHO1", "RAD27", "LSP1", "RPA49", "HSP104"), Hub_Score = c(0.956, 0.9213, 0.8021, 0.7826, 0.771, 0.6742, 0.6061, 0.5365))
 df$Genes <- factor(df$Genes, levels = df$Genes[order(df$Hub_Score)])
 df$Genes  # notice the changed order of factor levels
@@ -1454,7 +1042,7 @@ p + coord_flip(ylim = c(0.5,1))
 geom_col()
 
 
-
+####Comparison of F-Score, Recall and Precision bar plots 
 Unit <- c("Neighbor-Voting", "GBA", "CNPFP") #character objects need quotes
 Accuracy <- c(0.8879, 0.9386, 0.9710)
 AUROC <- c(0.7241, 0.8502, 0.9862)
@@ -1477,75 +1065,3 @@ ggplot(data = df2, aes(x = Unit, y = value, fill = type, width = 0.50)) +
   theme(aspect.ratio = .1) + 
   scale_fill_grey() + theme_classic() +
   geom_col(position = position_dodge()) 
-
-"#e5f5e0", "#a1d99b", "#31a354"
-
-Unit <- c("PlRPie", "XGB", "SGB", "RF","DT","AdaBoost") #character objects need quotes
-Accuracy <- c(0.8879, 0.9386, 0.9710, 0.9)
-Precision <- c(0.7241, 0.8502, 0.9862, 0.8)
-Sensitivity <- c(0.9406, 0.9683, 0.9691, 0.7)
-AUC <- c(0.9210, 0.8683, 0.7691, 0.7)
-variable <- c(Accuracy, Precision, Recall, F_Score)
-type <- c(rep("Mean Accuracy", 4), rep("Mean Precision", 4), rep("Mean Recall", 4),rep("Mean AUC", 4))
-df <- data.frame(Unit, Accuracy, Precision, Sensitivity, AUC)
-head(df)
-library(ggplot2)
-require(tidyr)
-library(reshape2)
-df1 <- data.frame(Accuracy, Precision, Sensitivity, AUC, unit)
-df2 <- melt(df)
-head(df2)
-df.long <- gather(df, Unit)
-colnames(df2) <- c("Unit", "variable", "value")
-windows()
-ggplot(data = df2, aes(x = Unit, y = value, fill = type, width = 0.50)) +
-  scale_y_continuous(expand = c(0, 0), breaks = seq(0,1.1,by=0.1))+
-  theme(aspect.ratio = .1) + 
-  scale_fill_grey() + theme_classic() +
-  geom_col(position = position_dodge()) 
-
-
-
-
-mydata <- data.frame(unit, values)
-
-require(tidyr)
-df.long <- gather(df, Unit)
-colnames(df.long) <- c("Accuracy", "Precision", "values")
-
-windows()
-ggplot(data = df, aes(x = Unit, y = values )) +
-  geom_col(position = position_dodge()) 
-
-
-library(ggplot2)
-library(reshape2)
-
-x <- c(5,17,31,9,17,10,30,28,16,29,14,34)
-y <- c(1,2,3,4,5,6,7,8,9,10,11,12)
-day <- c(1,2,3,4,5,6,7,8,9,10,11,12)
-
-
-df1 <- data.frame(Accuracy, Precision, Recall, F_Score, unit)
-df2 <- melt(df)
-head(df2)
-
-
-names(df2)[3] <- "metric"
-windows()
-ggplot(df, aes(x = unit, y= metric, fill = variable), xlab="Age Group") +
-  geom_bar(stat="identity", width=.5, position = "dodge")  
-
-windows()
-ggplot(df, aes(x=day, y=value, fill=variable)) +
-  geom_bar(stat='identity', position='dodge')
-
-windows()
-p <-ggplot(data = df, aes(x = Unit, y = values ))
-p +geom_bar(stat = "identity", aes(fill = type), position = "dodge")
-
-
-######Community detection 
-library(igraph)
-g1 <- graph.adjacency(as.matrix(datExprADJ1),mode="undirected",weighted=TRUE,diag=FALSE)
-
