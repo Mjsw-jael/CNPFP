@@ -247,108 +247,6 @@ table(dynamicMods)
 ###Hub Genes 
 hubs = chooseTopHubInEachModule(datExprYeast1, dynamicMods)
 hubs
-library(WGCNA)
-library(igraph)
-library(limmaDE2)
-pow=6
-net.1 = blockwiseModules(datExprYeast1, power = pow,
-                         maxBlockSize = 1000, deepSplit = T,
-                         minModuleSize = 50,
-                         saveTOMs = FALSE,
-                         verbose = F)
-net <- blockwiseModules(datExprYeast1,power=pow,
-                        deepSplit=T, minModuleSize=min(20,ncol(datExprYeast1/2)), minKMEtoStay=0,
-                        mergeCutHeight=0.25, detectCutHeight=0.99995,
-                        corType="bicor", networkType="signed", pamStage=TRUE,
-                        TOMType = "signed", TOMDenom = "min",
-                        verbose=3, minCoreKME = 0.5, minCoreKMESize = minModuleSize/3, 
-                        saveTOMs=FALSE, maxBlockSize=10000)
-n <- blockwiseModules(
-  # Input data
-  
-  datExprYeast1, 
-  weights = NULL,
-  
-  # Data checking options
-  
-  checkMissingData = TRUE,
-  
-  # Options for splitting data into blocks
-  
-  blocks = NULL,
-  maxBlockSize = 5000,
-  blockSizePenaltyPower = 5,
-  nPreclusteringCenters = as.integer(min(ncol(datExprYeast1)/20, 
-                                         100*ncol(datExprYeast1)/maxBlockSize)),
-  randomSeed = 12345,
-  
-  # load TOM from previously saved file?
-  
-  loadTOM = FALSE,
-  
-  # Network construction arguments: correlation options
-  
-  corType = "pearson",
-  maxPOutliers = 1, 
-  quickCor = 0,
-  pearsonFallback = "individual",
-  cosineCorrelation = FALSE,
-  
-  # Adjacency function options
-  
-  power = 6,
-  networkType = "unsigned",
-  replaceMissingAdjacencies = FALSE,
-  suppressTOMForZeroAdjacencies = FALSE,
-  
-  # Topological overlap options
-  
-  TOMType = "signed",
-  TOMDenom = "min",
-  
-  # Saving or returning TOM
-  
-  getTOMs = NULL,
-  saveTOMs = FALSE, 
-  saveTOMFileBase = "blockwiseTOM",
-  
-  # Basic tree cut options
-  
-  deepSplit = T,
-  detectCutHeight = 0.99995, 
-  minModuleSize = 50,
-  
-  # Advanced tree cut options
-  
-  maxCoreScatter = NULL, minGap = NULL,
-  maxAbsCoreScatter = NULL, minAbsGap = NULL,
-  minSplitHeight = NULL, minAbsSplitHeight = NULL,
-  
-  useBranchEigennodeDissim = FALSE,
-  minBranchEigennodeDissim = mergeCutHeight,
-  
-  stabilityLabels = NULL,
-  stabilityCriterion = c("Individual fraction", "Common fraction"),
-  minStabilityDissim = NULL,
-  
-  pamStage = TRUE, pamRespectsDendro = TRUE,
-  
-  # Gene reassignment, module trimming, and module "significance" criteria
-  
-  reassignThreshold = 1e-6,
-  minCoreKME = 0.5, 
-  minCoreKMESize = 50/3,
-  minKMEtoStay = 0.3,
-  
-  # Module merging options
-  
-  mergeCutHeight = 0.25, 
-  impute = TRUE, 
-  trapErrors = FALSE, 
-  
-  # Output options
-  
-  numericLabels = FALSE,
   
   ## Make an adjacency matrix and set some arbitrary cutoffs and parameters for plotting the network
   c = as.vector(data)
@@ -419,14 +317,6 @@ n <- blockwiseModules(
   windows()
   plot(g1, vertex.size=as*30, main="Authorities")
 
-
-  ###Meta analysis and forest plots
-  library(meta)
-  data = c("YHR089C", "YKL113C", "YNL248C", "YPL004C", "YMR001C", "YDR226W", "YLL026W", "YPL127C")
-  meta1 <- metacont(n.e, mean.e, sd.e, n.c, mean.c, sd.c, data=data, sm="SMD")
-  meta1
-  forest(meta1)
-  
 library(WGCNA)
 library(igraph)
 pow=6
@@ -437,18 +327,6 @@ net.1 = blockwiseModules(datExpr.1, power = pow,
                          verbose = F)
 module_assignments <- net.1$colors
 nlevels(factor(module_assignments))
-
-fc = cluster_fast_greedy(g1,weights =NULL)# cluster_walktrap cluster_edge_betweenness, cluster_fast_greedy, cluster_spinglass
-modularity = modularity(g1,membership(fc))
-
-comps = membership(fc)
-colbar = rainbow(max(comps))
-V(g1)$color = colbar[comps] 
-
-set.seed(123)
-plot(g1,main="Co-occurrence network",vertex.frame.color=NA,vertex.label=NA,
-     edge.lty=1,edge.curved=TRUE,margin=c(0,0,0,0))
-
 
 hs <- hub_score(dynamicMods, weights=NA)$vector
 
@@ -627,8 +505,6 @@ for (i in 1:length(colorsA2))
 colnames(kMEtable2)=c("PSID","Gene","Module",sort(c(colnames(
   geneModuleMembership2), colnames(MMPvalue2))))
 
-
-
 ##Comparing the 2 networks 
 Gene = rownames(datExprADJ1[restDegreeADJ])
 topGenesKME = NULL
@@ -662,7 +538,6 @@ moduleColors2 = labels2colors(dynamicMods)
 table(moduleColors2)
 CCMEs = mergedMEs; 
 geneTree = merge$dendrograms[[1]];
-
 
 ####Module differential Analysis
 library(MODA)
@@ -947,8 +822,6 @@ par(mar = c(11, 11, 5, 1));
 barplot(ego2, drop=TRUE, showCategory=12)
 
 ##Protein Function Prediction
-source("https://bioconductor.org/biocLite.R")
-biocLite("EGAD")
 library(EGAD)
 datExprADJ1 <- as.data.frame(t(ADJ1))
 dim(datExprADJ1)
@@ -963,7 +836,6 @@ YPP <- subset(ADJ1, rownames(ADJ1)%in%PP, colnames(ADJ1)%in%PP)
 n <- nrow(YPP);
 # Improve performance by Extend network
 ext_gene_network <- extend_network(YPP, max=300)
-ext_net <- extend_network(YPP, max=800)
 annotations_sub1 <- extend_network(YPP)
 
 #####scores 
@@ -998,11 +870,11 @@ windows()
 avgs <- plot_density_compare(aucA, aucB, xlab="AUROC")
 windows()
 plot_value_compare(aucA, aucB)
-scores <- predictions(x, ADJ1)
+scores <- predictions(annotations_sub1, ext_gene_network)
 windows()
-roc <- plot_roc(scores, annot)
-plot_roc_overlay(scores, x)
-roc <- get_roc(scores, x)
+roc <- plot_roc(scores, annotations_sub1)
+plot_roc_overlay(scores, annotations_sub1)
+roc <- get_roc(scores, annotations_sub1)
 auroc <- get_auc(roc[,1], roc[,2])
 print(auroc)
 
@@ -1043,7 +915,7 @@ geom_col()
 
 
 ####Comparison of F-Score, Recall and Precision bar plots 
-Unit <- c("Neighbor-Voting", "GBA", "CNPFP") #character objects need quotes
+Unit <- c("Neighbor-Voting", "GBA", "CNPFP") 
 Accuracy <- c(0.8879, 0.9386, 0.9710)
 AUROC <- c(0.7241, 0.8502, 0.9862)
 F_Score <- c(0.9406, 0.9683, 0.9691)
