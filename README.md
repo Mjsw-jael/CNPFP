@@ -19,8 +19,6 @@ read.csv(file = "(file location)/YeastProtein_NodeNames.csv", header=F)
 read.csv("(file location)/YeastProtein_ADJ1.csv", header=F)
 read.csv(file ="(file location)/YEASTCellCycle4000.csv",header=T, row.names=1)
 
-##CNPred
-
 To run CNPFP execute 'CNPFP.r'
 
 #Evaluation 
