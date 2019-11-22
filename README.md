@@ -26,12 +26,3 @@ To run CNPFP execute 'CNPFP.r'
 auroc
 accuracy
 F-Score
-
-##Citation
-
-If you use CNPFP in your academic research, please cite:
-Wekesa JS, Meng J, Luan Y. CNPFP: Protein Function Prediction based on Differential Co-expression and Neighborhood Analysis
-
-##Contact
-
-For technical problems, please contact Jael (jael(at)mail.dlut.edu.cn
